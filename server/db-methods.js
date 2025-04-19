@@ -2,9 +2,9 @@
 const client = require('./db');
 const { v4: uuidv4 } = require('uuid');
 
-const createCustomer = async (name) => {
+const createUser = async (name) => {
   const SQL = `
-    INSERT INTO customers(id, name)
+    INSERT INTO users(id, name)
     VALUES ($1, $2)
     RETURNING *
   `;
@@ -12,9 +12,9 @@ const createCustomer = async (name) => {
   return response.rows[0];
 };
 
-const createRestaurant = async (name) => {
+const createProduct = async (name) => {
   const SQL = `
-    INSERT INTO restaurants(id, name)
+    INSERT INTO products(id, name)
     VALUES ($1, $2)
     RETURNING *
   `;
@@ -22,51 +22,57 @@ const createRestaurant = async (name) => {
   return response.rows[0];
 };
 
-const createReservation = async ({ customer_id, restaurant_id, reservation_date }) => {
+const createFavorite = async ({ user_id, product_id }) => {
   const SQL = `
-    INSERT INTO reservations(id, customer_id, restaurant_id, reservation_date)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO favorites(id, user_id, product_id)
+    VALUES ($1, $2, $3)
     RETURNING *
   `;
   const response = await client.query(SQL, [
     uuidv4(),
-    customer_id,
-    restaurant_id,
-    reservation_date,
+    user_id,
+    product_id,
   ]);
   return response.rows[0];
 };
 
-const destroyReservation = async ({ id, customer_id }) => {
+const destroyFavorite = async ({ id, user_id }) => {
   const SQL = `
-    DELETE FROM reservations
-    WHERE id = $1 AND customer_id = $2
+    DELETE FROM favorites
+    WHERE id = $1 AND user_id = $2
   `;
-  await client.query(SQL, [id, customer_id]);
+  await client.query(SQL, [id, user_id]);
 };
 
-const fetchCustomers = async () => {
-  const response = await client.query('SELECT * FROM customers');
+const fetchUsers = async () => {
+  const response = await client.query('SELECT * FROM users');
   return response.rows;
 };
 
-const fetchRestaurants = async () => {
-  const response = await client.query('SELECT * FROM restaurants');
+const fetchProducts = async () => {
+  const response = await client.query('SELECT * FROM products');
   return response.rows;
 };
 
-const fetchReservations = async () => {
-  const response = await client.query('SELECT * FROM reservations');
+const fetchFavorites = async () => {
+  const response = await client.query('SELECT * FROM favorites');
+  return response.rows;
+};
+
+const fetchUserFavorites = async (user_id) => {
+  const SQL = `SELECT * FROM favorites WHERE user_id = $1`;
+  const response = await client.query(SQL, [user_id]);
   return response.rows;
 };
 
 
 module.exports = {
-  createCustomer,
-  createRestaurant,
-  createReservation,
-  destroyReservation,
-  fetchCustomers,
-  fetchRestaurants,
-  fetchReservations
+  createUser,
+  createProduct,
+  createFavorite,
+  destroyFavorite,
+  fetchUsers,
+  fetchProducts,
+  fetchFavorites,
+  fetchUserFavorites
 };

@@ -1,13 +1,15 @@
 const client = require('./db');
+const morgan = require('morgan');
 const express = require('express');
 const {
-    createCustomer,
-    createRestaurant,
-    createReservation,
-    destroyReservation,
-    fetchCustomers,
-    fetchRestaurants,
-    fetchReservations
+    createUser,
+    createProduct,
+    createFavorite,
+    destroyFavorite,
+    fetchUsers,
+    fetchProducts,
+    fetchFavorites,
+    fetchUserFavorites
 } = require('./db-methods');
 
 const app = express();
@@ -15,49 +17,56 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 //API routes
-app.get('/api/customers', async (req, res, next) => {
-    console.log('📥 GET /api/customers hit');
+app.get('/api/users', async (req, res, next) => {
+    console.log('GET /api/users hit');
     try {
-      const customers = await fetchCustomers();
-      res.send(customers);
+      const users = await fetchUsers();
+      res.send(users);
     } catch (err) {
       next(err);
     }
   });
   
   
-  app.get('/api/restaurants', async (req, res, next) => {
+  app.get('/api/products', async (req, res, next) => {
     try {
-      res.send(await fetchRestaurants());
+      res.send(await fetchProducts());
     } catch (err) {
       next(err);
     }
   });
   
-  app.get('/api/reservations', async (req, res, next) => {
+  app.get('/api/favorites', async (req, res, next) => {
     try {
-      res.send(await fetchReservations());
+      res.send(await fetchFavorites());
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get('/api/users/:id/favorites', async (req, res, next) => {
+    try {
+      res.send(await fetchUserFavorites(req.params.id));
     } catch (err) {
       next(err);
     }
   });
   
-  app.post('/api/customers/:id/reservations', async (req, res, next) => {
+  app.post('/api/users/:id/favorites', async (req, res, next) => {
     try {
-      const reservation = await createReservation({
-        customer_id: req.params.id,
-        restaurant_id: req.body.restaurant_id,
-        reservation_date: req.body.reservation_date,
+      const favorite = await createFavorite({
+        user_id: req.params.id,
+        product_id: req.body.product_id,
       });
-      res.status(201).send(reservation);
+      res.status(201).send(favorite);
     } catch (err) {
       next(err);
     }
   });
   
-  app.delete('/api/customers/:customer_id/reservations/:id', async (req, res, next) => {
+  app.delete('/api/users/:userId/favorites/:id', async (req, res, next) => {
     try {
-      await destroyReservation({ id: req.params.id, customer_id: req.params.customer_id });
+      await destroyFavorite({ id: req.params.id, user_id: req.params.userId });
       res.sendStatus(204);
     } catch (err) {
       next(err);
@@ -73,8 +82,7 @@ app.get('/api/customers', async (req, res, next) => {
     try {
       await client.connect();
       //const result = await client.query('SELECT NOW()');
-      console.log('Connected to PostgreSQL');
-  
+      console.log('Connected to PostgreSQL');  
     
       app.listen(PORT, () => {
         console.log(`Server is running at http://localhost:${PORT}`);
